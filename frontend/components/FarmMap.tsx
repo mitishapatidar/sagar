@@ -115,7 +115,7 @@ function findRegion(lat: number, lon: number): { region: string; crops: string; 
 }
 
 
-function LocationMarker({ setLocation, setCrop }: any) {
+function LocationMarker({ setLocation, setCrop, setReportData, setRawCoords }: any) {
 
   const [position, setPosition] = useState<any>(null)
 
@@ -125,10 +125,18 @@ function LocationMarker({ setLocation, setCrop }: any) {
       const lon = e.latlng.lng
 
       setPosition(e.latlng)
+      if (setRawCoords) setRawCoords({ lat, lng: lon })
       setLocation(`Lat: ${lat.toFixed(3)}, Lon: ${lon.toFixed(3)}`)
 
       const result = findRegion(lat, lon)
       setCrop(`${result.crops}  (${result.region} — ${result.soil})`)
+      if (setReportData) {
+        setReportData({
+          name: result.crops,
+          tips: "Ensure proper irrigation as per soil condition. Protect from pests using neem oil if organic. Give required fertilizers.",
+          soil: result.soil
+        })
+      }
     }
   })
 
@@ -137,7 +145,7 @@ function LocationMarker({ setLocation, setCrop }: any) {
   )
 }
 
-export default function FarmMap({ setLocation, setCrop }: any) {
+export default function FarmMap({ setLocation, setCrop, setReportData, setRawCoords }: any) {
   return (
     <MapContainer
       center={[22.9734, 78.6569]}
@@ -148,7 +156,12 @@ export default function FarmMap({ setLocation, setCrop }: any) {
         attribution="&copy; OpenStreetMap contributors"
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <LocationMarker setLocation={setLocation} setCrop={setCrop} />
+      <LocationMarker 
+        setLocation={setLocation} 
+        setCrop={setCrop} 
+        setReportData={setReportData}
+        setRawCoords={setRawCoords}
+      />
     </MapContainer>
   )
 }

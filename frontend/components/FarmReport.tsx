@@ -8,6 +8,7 @@ interface FarmReportProps {
   recommendation: { name: string; tips: string; soil: string } | null;
   location: { lat: number; lng: number } | null;
   date: string;
+  weeklyData?: { day: string; moisture: number; temp: number; humidity: number }[];
 }
 
 export default function FarmReport({
@@ -17,6 +18,7 @@ export default function FarmReport({
   recommendation,
   location,
   date,
+  weeklyData,
 }: FarmReportProps) {
 
   // Helper to determine status and colors
@@ -132,10 +134,39 @@ export default function FarmReport({
       </div>
 
       {/* Location specifics */}
-      {location && (
+      {location && typeof location.lat === 'number' && typeof location.lng === 'number' && (
         <div className="flex items-center gap-2 text-gray-500 mb-4 bg-gray-50 p-3 rounded-lg w-fit">
           <MapPin size={20} />
           <span>Coordinates: {location.lat.toFixed(4)}, {location.lng.toFixed(4)}</span>
+        </div>
+      )}
+
+      {/* Weekly Data Table (if requested) */}
+      {weeklyData && weeklyData.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold mb-4 border-b pb-2">3. 7-Day History (पिछले 7 दिन का रिकॉर्ड)</h2>
+          <div className="overflow-hidden rounded-xl border border-gray-200">
+            <table className="min-w-full bg-white text-center">
+              <thead className="bg-green-50 text-green-800 border-b border-gray-200">
+                <tr>
+                  <th className="py-3 px-4 font-bold">Day (दिन)</th>
+                  <th className="py-3 px-4 font-bold">Moisture (नमी)</th>
+                  <th className="py-3 px-4 font-bold">Temp (तापमान)</th>
+                  <th className="py-3 px-4 font-bold">Humidity (आर्द्रता)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {weeklyData.map((data, index) => (
+                  <tr key={index} className="border-b border-gray-100 last:border-0">
+                    <td className="py-3 px-4 font-medium">{data.day}</td>
+                    <td className="py-3 px-4">{data.moisture}%</td>
+                    <td className="py-3 px-4">{data.temp}°C</td>
+                    <td className="py-3 px-4">{data.humidity}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

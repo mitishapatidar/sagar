@@ -1,4 +1,7 @@
+import { useLanguage } from "../context/LanguageContext"
+
 export default function Footer() {
+  const { t, language } = useLanguage()
   return (
 
 <footer className="bg-green-900 text-white mt-20">
@@ -11,40 +14,40 @@ KhetMitra
 </h2>
 
 <p>
-Smart farming platform helping farmers monitor
-soil conditions and improve crop productivity
-using AI and IoT sensors.
+{language === 'en'
+  ? "Smart farming platform helping farmers monitor soil conditions and improve crop productivity using AI and IoT sensors."
+  : "स्मार्ट फार्मिंग प्लेटफॉर्म जो किसानों को मिट्टी की स्थिति की निगरानी करने और AI और IoT सेंसर का उपयोग करके फसल उत्पादकता में सुधार करने में मदद करता है।"}
 </p>
 </div>
 
 <div>
 
 <h3 className="text-xl font-semibold mb-4">
-Contact Us
+{language === 'en' ? "Contact Us" : "संपर्क करें"}
 </h3>
 
-<p>Email : support@khetmitra.com</p>
-<p>Phone : +91 9823345187</p>
-<p>Location : Maharashtra, India</p>
+<p>{language === 'en' ? "Email" : "ईमेल"} : support@khetmitra.com</p>
+<p>{language === 'en' ? "Phone" : "फोन"} : +91 9823345187</p>
+<p>{language === 'en' ? "Location" : "स्थान"} : Maharashtra, India</p>
 
 </div>
 
 <div>
 
 <h3 className="text-xl font-semibold mb-4">
-Quick Links
+{language === 'en' ? "Quick Links" : "त्वरित लिंक"}
 </h3>
 
-<p>Dashboard</p>
-<p>Farm Sensors</p>
-<p>AI Recommendation</p>
+<p>{t("nav_dashboard")}</p>
+<p>{t("nav_sensors")}</p>
+<p>{language === 'en' ? "AI Recommendation" : "AI सलाह"}</p>
 
 </div>
 
 </div>
 
 <div className="text-center py-4 bg-green-950">
-© 2026 KhetMitra. All Rights Reserved.
+© 2026 KhetMitra. {language === 'en' ? "All Rights Reserved." : "सर्वाधिकार सुरक्षित।"}
 </div>
 
 </footer>
