@@ -6,6 +6,7 @@ import ProtectedRoute from "../../components/ProtectedRoute"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import dynamic from "next/dynamic"
+import FarmReport from "../../components/FarmReport"
 
 const FarmMap = dynamic(
   () => import("../../components/FarmMap"),
@@ -84,6 +85,9 @@ export default function Dashboard() {
   const [crop, setCrop] = useState("Click on map to select farm location")
   const [location, setLocation] = useState("No location selected")
 
+  const downloadPDF = () => {
+    window.print()
+  }
 
   /* FETCH SENSOR DATA — every 15 seconds (matches ESP32 send interval) */
 
@@ -139,13 +143,24 @@ export default function Dashboard() {
     <ProtectedRoute>
     <main className="bg-gray-100 min-h-screen">
 
-      <Navbar />
+      {/* Hide entirely when printing */}
+      <div className="print:hidden">
+        <Navbar />
 
-      <section className="pt-28 max-w-7xl mx-auto p-10">
+        <section className="pt-28 max-w-7xl mx-auto p-10">
 
-        <h1 className="text-3xl font-bold text-green-700 mb-2">
-          Farm Dashboard
-        </h1>
+          <div className="flex justify-between items-center mb-2">
+            <h1 className="text-3xl font-bold text-green-700">
+              Farm Dashboard
+            </h1>
+            <button 
+              onClick={downloadPDF}
+              className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-medium shadow flex items-center gap-2 transition-colors transition-transform active:scale-95"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+              Download Report (PDF)
+            </button>
+          </div>
 
         <p className="text-gray-500 mb-6">
           🟢 Live Data – Updating every 15 seconds
@@ -305,6 +320,19 @@ export default function Dashboard() {
       </section>
 
       <Footer />
+      </div>
+
+      {/* Visible only when printing */}
+      <div className="hidden print:block w-full absolute top-0 left-0 bg-white min-h-screen z-50">
+        <FarmReport 
+          moisture={latest.moisture}
+          temperature={latest.temp}
+          humidity={latest.humidity}
+          recommendation={crop !== "Click on map to select farm location" ? { name: crop, tips: "Ensure proper irrigation as per soil condition. Protect from pests using neem oil if organic. Give required fertilizers.", soil: "Suitable for local region." } : null}
+          location={null}
+          date={new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+        />
+      </div>
 
     </main>
     </ProtectedRoute>
