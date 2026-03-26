@@ -84,7 +84,7 @@ export default function Dashboard() {
   ])
   const [latest, setLatest] = useState({ moisture: 45, temp: 27, humidity: 60 })
   const [alerts, setAlerts] = useState<Alert[]>([])
-  
+
   const [crop, setCrop] = useState(language === 'en' ? "Click on map to select farm location" : "खेत का स्थान चुनने के लिए मैप पर क्लिक करें")
   const [location, setLocation] = useState(language === 'en' ? "No location selected" : "कोई स्थान नहीं चुना गया")
   const [reportData, setReportData] = useState<{ name: string; tips: string; soil: string } | null>(null)
@@ -155,22 +155,22 @@ export default function Dashboard() {
 
   return (
     <ProtectedRoute>
-      <Navbar />
-      
-      <main className="pt-24 min-h-screen p-6 max-w-7xl mx-auto print:p-0 print:max-w-none bg-green-50">
-        
+      <Navbar className="print:hidden" />
+
+      <main className="pt-24 min-h-screen p-6 max-w-7xl mx-auto print:hidden bg-green-50">
+
         <div className="flex justify-between items-center mb-2">
           <h1 className="text-3xl font-bold text-green-700">
             {t("dashboard_title")}
           </h1>
           <div className="flex gap-3">
-            <button 
+            <button
               onClick={() => downloadPDF(true)}
               className="bg-green-100 hover:bg-green-200 text-green-800 px-4 py-2.5 rounded-lg font-medium shadow-sm flex items-center gap-2 transition-colors active:scale-95"
             >
               {t("btn_weekly_report")}
             </button>
-            <button 
+            <button
               onClick={() => downloadPDF(false)}
               className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-medium shadow flex items-center gap-2 transition-colors active:scale-95"
             >
@@ -207,13 +207,12 @@ export default function Dashboard() {
           <h2 className="text-xl font-semibold mb-4">{t("dash_alerts_title")}</h2>
           <div className="space-y-3">
             {alerts.length > 0 ? alerts.map((alert, idx) => (
-              <div 
-                key={idx} 
-                className={`p-4 rounded-lg border flex items-center gap-3 ${
-                  alert.type === "error" ? "bg-red-50 border-red-200 text-red-800" :
-                  alert.type === "warning" ? "bg-amber-50 border-amber-200 text-amber-800" :
-                  "bg-green-50 border-green-200 text-green-800"
-                }`}
+              <div
+                key={idx}
+                className={`p-4 rounded-lg border flex items-center gap-3 ${alert.type === "error" ? "bg-red-50 border-red-200 text-red-800" :
+                    alert.type === "warning" ? "bg-amber-50 border-amber-200 text-amber-800" :
+                      "bg-green-50 border-green-200 text-green-800"
+                  }`}
               >
                 {alert.message}
               </div>
@@ -267,15 +266,15 @@ export default function Dashboard() {
           <h2 className="text-2xl font-semibold mb-4">{t("ai_recommendation_title")}</h2>
           <p className="text-gray-600 mb-4">{t("ai_recommendation_desc")}</p>
           <div className="p-4 bg-green-50 rounded-lg border border-green-100 mb-6">
-             <p className="font-medium">{t("ai_selected_location")}: <span className="text-green-800">{location}</span></p>
-             <p className="text-xl font-bold text-green-700 mt-2">
-               {language === 'hi' ? "सुझाई गई फसल" : "Recommended Crop"}: {crop}
-             </p>
+            <p className="font-medium">{t("ai_selected_location")}: <span className="text-green-800">{location}</span></p>
+            <p className="text-xl font-bold text-green-700 mt-2">
+              {language === 'hi' ? "सुझाई गई फसल" : "Recommended Crop"}: {crop}
+            </p>
           </div>
           <div className="h-[400px] w-full rounded-xl overflow-hidden border border-gray-200">
-            <FarmMap 
-              setCrop={setCrop} 
-              setLocation={setLocation} 
+            <FarmMap
+              setCrop={setCrop}
+              setLocation={setLocation}
               setReportData={setReportData}
               setRawCoords={setRawCoords}
             />
@@ -287,17 +286,17 @@ export default function Dashboard() {
             {t("nav_sensors")}
           </Link>
           <Link href="/backend-sensor" className="bg-gray-800 text-white px-8 py-3 rounded-lg hover:bg-gray-900 shadow-md font-medium transition">
-             Backend Monitor
+            Backend Monitor
           </Link>
         </div>
 
       </main>
 
-      <Footer />
+      <Footer className="print:hidden" />
 
       {/* Visible only when printing */}
       <div className="hidden print:block w-full absolute top-0 left-0 bg-white min-h-screen z-50">
-        <FarmReport 
+        <FarmReport
           moisture={latest.moisture}
           temperature={latest.temp}
           humidity={latest.humidity}

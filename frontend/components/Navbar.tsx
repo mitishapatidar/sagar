@@ -6,7 +6,7 @@ import { useEffect, useState, useRef } from "react"
 import { isLoggedIn, logout } from "../lib/auth"
 import { useLanguage } from "../context/LanguageContext"
 
-export default function Navbar() {
+export default function Navbar({ className = "" }: { className?: string }) {
 
   const [logged, setLogged] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
@@ -34,7 +34,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="w-full bg-white/90 backdrop-blur-md shadow-sm fixed top-0 z-50 border-b border-gray-100">
+    <nav className={`w-full bg-white/90 backdrop-blur-md shadow-sm fixed top-0 z-50 border-b border-gray-100 ${className}`}>
       <div className="max-w-7xl mx-auto flex justify-between items-center p-4">
         
         {/* LOGO */}
@@ -56,6 +56,9 @@ export default function Navbar() {
               </Link>
               <Link href="/sensors" className="hover:text-green-600 transition-colors uppercase text-sm tracking-wider">
                 {t("nav_sensors")}
+              </Link>
+              <Link href="/market" className="hover:text-green-600 transition-colors uppercase text-sm tracking-wider">
+                {t("nav_market")}
               </Link>
             </>
           )}

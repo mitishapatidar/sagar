@@ -9,6 +9,7 @@ const translations = {
     nav_home: "Home",
     nav_dashboard: "Dashboard",
     nav_sensors: "Farm Sensors",
+    nav_market: "Market",
     nav_login: "Login / Sign Up",
     nav_logout: "Logout",
     nav_profile: "Profile",
@@ -55,12 +56,25 @@ const translations = {
     ai_recommendation_title: "AI Crop Recommendation",
     ai_recommendation_desc: "Click on the map to select your farm location. AI will recommend crops suitable for that region.",
     ai_selected_location: "Selected Location",
+
+    // Market Page
+    market_title: "Farmer-to-Company Market",
+    market_subtitle: "Sell your crops directly to major retailers and companies. No middleman, better prices for farmers.",
+    market_active_bids: "Active Company Bids",
+    market_add_crop: "Add My Crop for Sale",
+    market_trends: "Live Market Trends",
+    market_company: "Company",
+    market_crop: "Crop",
+    market_price: "Offered Price",
+    market_quantity: "Req. Quantity",
+    market_action: "Contact",
   },
   hi: {
     // Navbar
     nav_home: "होम (Home)",
     nav_dashboard: "डैशबोर्ड (Dashboard)",
     nav_sensors: "सेंसर (Sensors)",
+    nav_market: "बाजार (Market)",
     nav_login: "लॉगिन करें (Login)",
     nav_logout: "लॉगआउट (Logout)",
     nav_profile: "प्रोफ़ाइल (Profile)",
@@ -107,6 +121,18 @@ const translations = {
     ai_recommendation_title: "AI फसल सलाह",
     ai_recommendation_desc: "अपने खेत का स्थान चुनने के लिए मैप पर क्लिक करें। AI उस क्षेत्र के लिए उपयुक्त फसलों की सिफारिश करेगा।",
     ai_selected_location: "चुना गया स्थान",
+
+    // Market Page
+    market_title: "किसान-से-कंपनी बाजार",
+    market_subtitle: "अपनी फसल सीधे बड़े रिटेलर्स और कंपनियों को बेचें। कोई बिचौलिया नहीं, किसानों के लिए बेहतर दाम।",
+    market_active_bids: "सक्रिय कंपनी बोलियां (Active Bids)",
+    market_add_crop: "बिक्री के लिए अपनी फसल जोड़ें",
+    market_trends: "लाइव बाजार रुझान",
+    market_company: "कंपनी",
+    market_crop: "फसल",
+    market_price: "प्रस्तावित मूल्य",
+    market_quantity: "आवश्यक मात्रा",
+    market_action: "संपर्क करें",
   }
 };
 
