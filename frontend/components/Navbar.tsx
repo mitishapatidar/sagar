@@ -33,9 +33,13 @@ KhetMitra
 
 <Link href="/">Home</Link>
 
+{logged && (
+<>
 <Link href="/dashboard">Dashboard</Link>
 
 <Link href="/sensors">Farm Sensors</Link>
+</>
+)}
 
 {logged ? (
 <>

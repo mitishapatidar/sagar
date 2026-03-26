@@ -2,297 +2,311 @@
 
 import Navbar from "../../components/Navbar"
 import Footer from "../../components/Footer"
-import { useEffect,useState } from "react"
+import ProtectedRoute from "../../components/ProtectedRoute"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import dynamic from "next/dynamic"
 
 const FarmMap = dynamic(
-() => import("../../components/FarmMap"),
-{ ssr:false }
+  () => import("../../components/FarmMap"),
+  { ssr: false }
 )
 
 import {
-LineChart,
-Line,
-XAxis,
-YAxis,
-Tooltip,
-ResponsiveContainer,
-CartesianGrid
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid
 } from "recharts"
 
-
-export default function Dashboard(){
-
-const [data,setData]=useState([
-{time:"1",moisture:45,temp:27,humidity:60},
-{time:"2",moisture:47,temp:28,humidity:62},
-{time:"3",moisture:49,temp:29,humidity:65},
-{time:"4",moisture:50,temp:28,humidity:66},
-{time:"5",moisture:52,temp:27,humidity:67},
-{time:"6",moisture:53,temp:26,humidity:68}
-])
-
-const [crop,setCrop]=useState("Click on map to select farm location")
-const [location,setLocation]=useState("No location selected")
-const [irrigation,setIrrigation]=useState("Checking soil conditions...")
-
-
-/* GRAPH UPDATE EVERY 10 MIN */
-
-useEffect(()=>{
-
-const interval=setInterval(()=>{
-
-setData(prev=>{
-
-const newPoint={
-time:(prev.length+1).toString(),
-moisture:40+Math.floor(Math.random()*20),
-temp:25+Math.floor(Math.random()*10),
-humidity:55+Math.floor(Math.random()*20)
+type SensorPoint = {
+  time: string
+  moisture: number
+  temp: number
+  humidity: number
+  timestamp?: number
 }
 
-const updated=[...prev,newPoint]
-
-if(updated.length>6){
-updated.shift()
+type Alert = {
+  type: "error" | "warning" | "ok"
+  message: string
 }
 
-return updated
+function getSmartAlerts(moisture: number, temp: number, humidity: number): Alert[] {
+  const alerts: Alert[] = []
 
-})
+  // Moisture alerts
+  if (moisture < 30) {
+    alerts.push({ type: "error", message: "🚨 Soil critically dry! Irrigate immediately." })
+  } else if (moisture < 45) {
+    alerts.push({ type: "warning", message: "⚠ Soil moisture low – Start irrigation soon." })
+  } else if (moisture > 75) {
+    alerts.push({ type: "warning", message: "💧 Soil over-watered – Stop irrigation." })
+  } else {
+    alerts.push({ type: "ok", message: "✅ Soil moisture optimal for crop growth." })
+  }
 
-},600000)
+  // Temperature alerts
+  if (temp > 38) {
+    alerts.push({ type: "error", message: "🔥 Temperature critically high! Risk of crop stress." })
+  } else if (temp > 32) {
+    alerts.push({ type: "warning", message: "🌡 High temperature – Consider shade or extra watering." })
+  } else if (temp < 10) {
+    alerts.push({ type: "warning", message: "❄ Low temperature – Risk of frost damage." })
+  }
 
-return()=>clearInterval(interval)
+  // Humidity alerts
+  if (humidity > 85) {
+    alerts.push({ type: "warning", message: "💦 Humidity very high – Risk of fungal disease." })
+  } else if (humidity < 30) {
+    alerts.push({ type: "warning", message: "🏜 Low humidity – Increase watering frequency." })
+  }
 
-},[])
+  // Combined condition alert
+  if (moisture < 45 && temp > 32) {
+    alerts.push({ type: "error", message: "🚨 Dry + Hot combo – Urgent irrigation needed!" })
+  }
 
-
-
-/* IRRIGATION ALERT */
-
-useEffect(()=>{
-
-const latest=data[data.length-1]
-
-if(latest.moisture<45){
-setIrrigation("⚠ Soil Dry - Start Irrigation")
+  return alerts
 }
-else if(latest.moisture>60){
-setIrrigation("💧 Soil Moisture High - Stop Irrigation")
-}
-else{
-setIrrigation("✅ Soil Moisture Optimal")
-}
 
-},[data])
+export default function Dashboard() {
 
+  const [data, setData] = useState<SensorPoint[]>([
+    { time: "", moisture: 45, temp: 27, humidity: 60 }
+  ])
+  const [latest, setLatest] = useState({ moisture: 45, temp: 27, humidity: 60 })
+  const [alerts, setAlerts] = useState<Alert[]>([])
 
+  const [crop, setCrop] = useState("Click on map to select farm location")
+  const [location, setLocation] = useState("No location selected")
 
-return(
 
-<main className="bg-gray-100 min-h-screen">
+  /* FETCH SENSOR DATA — every 15 seconds (matches ESP32 send interval) */
 
-<Navbar/>
+  useEffect(() => {
 
-<section className="pt-28 max-w-7xl mx-auto p-10">
+    const fetchData = async () => {
+      try {
+        const res = await fetch("/api/sensor")
+        const json = await res.json()
 
-<h1 className="text-3xl font-bold text-green-700 mb-4">
-Farm Dashboard
-</h1>
+        // Use stored history for graph
+        if (json.history && json.history.length > 0) {
+          setData(json.history.slice(-20)) // Last 20 readings = 5 minutes on graph
+        } else {
+          // First reading — seed graph
+          setData(prev => {
+            const newPoint: SensorPoint = {
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+              moisture: json.latest.moisture,
+              temp: json.latest.temp,
+              humidity: json.latest.humidity
+            }
+            const updated = [...prev, newPoint]
+            if (updated.length > 20) updated.shift()
+            return updated
+          })
+        }
 
-<p className="text-gray-500 mb-6">
-🟢 Live Data – Updating every 10 minutes
-</p>
+        setLatest(json.latest)
+        setAlerts(getSmartAlerts(json.latest.moisture, json.latest.temp, json.latest.humidity))
 
+      } catch (err) {
+        console.error("Error fetching sensor data", err)
+      }
+    }
 
+    fetchData()
+    const interval = setInterval(fetchData, 15000) // 15 seconds
+    return () => clearInterval(interval)
 
-{/* SENSOR CARDS */}
+  }, [])
 
-<div className="grid md:grid-cols-4 gap-6 mb-10">
 
-<div className="bg-white p-6 rounded-xl shadow">
-<h3 className="font-semibold">Soil Moisture</h3>
-<p className="text-2xl mt-2">
-{data[data.length-1].moisture}%
-</p>
-</div>
 
-<div className="bg-white p-6 rounded-xl shadow">
-<h3 className="font-semibold">Temperature</h3>
-<p className="text-2xl mt-2">
-{data[data.length-1].temp}°C
-</p>
-</div>
-
-<div className="bg-white p-6 rounded-xl shadow">
-<h3 className="font-semibold">Humidity</h3>
-<p className="text-2xl mt-2">
-{data[data.length-1].humidity}%
-</p>
-</div>
-
-<div className="bg-white p-6 rounded-xl shadow">
-<h3 className="font-semibold">Irrigation Alert</h3>
-<p className="text-sm mt-2">{irrigation}</p>
-</div>
-
-</div>
-
-
-
-{/* GRAPHS */}
-
-<div className="grid md:grid-cols-3 gap-6 mb-10">
-
-
-<div className="bg-white p-6 rounded-xl shadow">
-
-<h3 className="font-semibold mb-4">
-Soil Moisture
-</h3>
-
-<ResponsiveContainer width="100%" height={220}>
-
-<LineChart data={data}>
-
-<CartesianGrid strokeDasharray="3 3"/>
-
-<XAxis dataKey="time"/>
-
-<YAxis/>
-
-<Tooltip/>
-
-<Line dataKey="moisture" stroke="#16a34a"/>
-
-</LineChart>
-
-</ResponsiveContainer>
-
-</div>
-
-
-
-<div className="bg-white p-6 rounded-xl shadow">
-
-<h3 className="font-semibold mb-4">
-Temperature
-</h3>
-
-<ResponsiveContainer width="100%" height={220}>
-
-<LineChart data={data}>
-
-<CartesianGrid strokeDasharray="3 3"/>
-
-<XAxis dataKey="time"/>
-
-<YAxis/>
-
-<Tooltip/>
-
-<Line dataKey="temp" stroke="#f97316"/>
-
-</LineChart>
-
-</ResponsiveContainer>
-
-</div>
-
-
-
-<div className="bg-white p-6 rounded-xl shadow">
-
-<h3 className="font-semibold mb-4">
-Humidity
-</h3>
-
-<ResponsiveContainer width="100%" height={220}>
-
-<LineChart data={data}>
-
-<CartesianGrid strokeDasharray="3 3"/>
-
-<XAxis dataKey="time"/>
-
-<YAxis/>
-
-<Tooltip/>
-
-<Line dataKey="humidity" stroke="#3b82f6"/>
-
-</LineChart>
-
-</ResponsiveContainer>
-
-</div>
-
-
-</div>
-
-
-
-{/* AI CROP RECOMMENDATION */}
-
-<div className="bg-white p-8 rounded-xl shadow mb-10">
-
-<h2 className="text-2xl font-semibold mb-4">
-AI Crop Recommendation
-</h2>
-
-<p className="text-gray-600 mb-4">
-Click on the map to select your farm location.
-AI will recommend crops suitable for that region.
-</p>
-
-<p className="mb-3 font-medium">
-Selected Location: {location}
-</p>
-
-<p className="text-green-700 text-lg font-semibold">
-Recommended Crops: {crop}
-</p>
-
-</div>
-
-
-
-{/* INTERACTIVE MAP */}
-
-<div className="bg-white p-6 rounded-xl shadow mb-10">
-
-<h3 className="font-semibold mb-4">
-Farm Location Map
-</h3>
-
-<FarmMap setLocation={setLocation} setCrop={setCrop}/>
-
-</div>
-
-
-
-<div className="flex gap-6">
-
-<Link href="/sensors">
-
-<button className="bg-green-600 text-white px-6 py-3 rounded-lg">
-View Sensors
-</button>
-
-</Link>
-
-</div>
-
-
-</section>
-
-<Footer/>
-
-</main>
-
-)
-
+  const alertBg = {
+    error: "bg-red-50 border-red-400 text-red-700",
+    warning: "bg-yellow-50 border-yellow-400 text-yellow-700",
+    ok: "bg-green-50 border-green-400 text-green-700"
+  }
+
+
+  return (
+    <ProtectedRoute>
+    <main className="bg-gray-100 min-h-screen">
+
+      <Navbar />
+
+      <section className="pt-28 max-w-7xl mx-auto p-10">
+
+        <h1 className="text-3xl font-bold text-green-700 mb-2">
+          Farm Dashboard
+        </h1>
+
+        <p className="text-gray-500 mb-6">
+          🟢 Live Data – Updating every 15 seconds
+        </p>
+
+
+        {/* SENSOR CARDS */}
+
+        <div className="grid md:grid-cols-4 gap-6 mb-10">
+
+          <div className="bg-white p-6 rounded-xl shadow border-l-4 border-green-500">
+            <h3 className="font-semibold text-gray-600">Soil Moisture</h3>
+            <p className="text-3xl font-bold text-green-700 mt-2">
+              {latest.moisture}%
+            </p>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow border-l-4 border-orange-400">
+            <h3 className="font-semibold text-gray-600">Temperature</h3>
+            <p className="text-3xl font-bold text-orange-500 mt-2">
+              {latest.temp}°C
+            </p>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow border-l-4 border-blue-500">
+            <h3 className="font-semibold text-gray-600">Humidity</h3>
+            <p className="text-3xl font-bold text-blue-600 mt-2">
+              {latest.humidity}%
+            </p>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow border-l-4 border-purple-400">
+            <h3 className="font-semibold text-gray-600">Readings Stored</h3>
+            <p className="text-3xl font-bold text-purple-600 mt-2">
+              {data.length}
+            </p>
+            <p className="text-xs text-gray-400 mt-1">In session</p>
+          </div>
+
+        </div>
+
+
+        {/* SMART IRRIGATION ALERTS */}
+
+        <div className="bg-white p-6 rounded-xl shadow mb-10">
+
+          <h2 className="text-xl font-semibold mb-4">
+            🚿 Smart Irrigation Alerts
+          </h2>
+
+          <div className="space-y-3">
+            {alerts.map((alert, i) => (
+              <div
+                key={i}
+                className={`border-l-4 px-4 py-3 rounded-r-lg text-sm font-medium ${alertBg[alert.type]}`}
+              >
+                {alert.message}
+              </div>
+            ))}
+          </div>
+
+        </div>
+
+
+        {/* GRAPHS */}
+
+        <div className="grid md:grid-cols-3 gap-6 mb-10">
+
+          <div className="bg-white p-6 rounded-xl shadow">
+            <h3 className="font-semibold mb-4">Soil Moisture</h3>
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="time" tick={{ fontSize: 10 }} />
+                <YAxis domain={[0, 100]} />
+                <Tooltip />
+                <Line dataKey="moisture" stroke="#16a34a" dot={false} strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow">
+            <h3 className="font-semibold mb-4">Temperature</h3>
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="time" tick={{ fontSize: 10 }} />
+                <YAxis />
+                <Tooltip />
+                <Line dataKey="temp" stroke="#f97316" dot={false} strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow">
+            <h3 className="font-semibold mb-4">Humidity</h3>
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="time" tick={{ fontSize: 10 }} />
+                <YAxis domain={[0, 100]} />
+                <Tooltip />
+                <Line dataKey="humidity" stroke="#3b82f6" dot={false} strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+        </div>
+
+
+        {/* AI CROP RECOMMENDATION */}
+
+        <div className="bg-white p-8 rounded-xl shadow mb-10">
+
+          <h2 className="text-2xl font-semibold mb-4">
+            AI Crop Recommendation
+          </h2>
+
+          <p className="text-gray-600 mb-4">
+            Click on the map to select your farm location.
+            AI will recommend crops suitable for that region.
+          </p>
+
+          <p className="mb-3 font-medium">
+            Selected Location: {location}
+          </p>
+
+          <p className="text-green-700 text-lg font-semibold">
+            Recommended Crops: {crop}
+          </p>
+
+        </div>
+
+
+        {/* INTERACTIVE MAP */}
+
+        <div className="bg-white p-6 rounded-xl shadow mb-10">
+          <h3 className="font-semibold mb-4">Farm Location Map</h3>
+          <FarmMap setLocation={setLocation} setCrop={setCrop} />
+        </div>
+
+
+        <div className="flex gap-6">
+          <Link href="/sensors">
+            <button className="bg-green-600 text-white px-6 py-3 rounded-lg">
+              View Sensors
+            </button>
+          </Link>
+          <Link href="/backend-sensor">
+            <button className="bg-gray-700 text-white px-6 py-3 rounded-lg">
+              Backend Monitor
+            </button>
+          </Link>
+        </div>
+
+
+      </section>
+
+      <Footer />
+
+    </main>
+    </ProtectedRoute>
+  )
 }
